@@ -2,9 +2,10 @@ name: CI
 
 on:
   push:
-    branches:  [ "main", "develop", "feature/**" ]
+    branches: [ "main", "develop", "feature/**" ]
   pull_request:
     branches: [ "main", "develop" ]
+  workflow_dispatch:
 
 jobs:
   build-test-analyze:
@@ -19,16 +20,22 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20
-          cache: 'npm'
+          node-version: '20'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test -- --coverage
-        env:
-          NODE_OPTIONS: --experimental-vm-modules
+      - name: Run tests (with coverage, ESM)
+        run: |
+          export NODE_OPTIONS=--experimental-vm-modules
+          npm test -- --coverage
+
+      - name: Setup Java (required by SonarCloud)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
